@@ -1,121 +1,64 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useEffect, useState } from 'react'
+import { NS_LOCATIONS } from './data/locations'
+import type { LocationWithRisk } from './types'
+import { fetchWeather } from './utils/weather'
+import { assessRisk } from './utils/riskScore'
+import Map from './components/Map'
+import AlertBanner from './components/AlertBanner'
+import RiskCard from './components/RiskCard'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [locations, setLocations] = useState<LocationWithRisk[]>(
+    NS_LOCATIONS.map(loc => ({ ...loc, weather: null, risk: null, loading: true }))
+  )
+
+  useEffect(() => {
+    NS_LOCATIONS.forEach(async (loc) => {
+      try {
+        const weather = await fetchWeather(loc.lat, loc.lng)
+        const risk = assessRisk(weather)
+        setLocations(prev =>
+          prev.map(l =>
+            l.id === loc.id ? { ...l, weather, risk, loading: false } : l
+          )
+        )
+      } catch (err) {
+        console.error(`Failed to fetch weather for ${loc.name}`, err)
+        setLocations(prev =>
+          prev.map(l =>
+            l.id === loc.id ? { ...l, loading: false } : l
+          )
+        )
+      }
+    })
+  }, [])
+
+  const highestRisk = locations
+    .filter(l => l.risk !== null)
+    .sort((a, b) => (b.risk!.score - a.risk!.score))[0]
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="min-h-screen bg-gray-950 text-white flex flex-col">
+      <header className="px-6 py-4 border-b border-gray-800">
+        <h1 className="text-xl font-bold tracking-tight">🔥 NS Wildfire Risk</h1>
+        <p className="text-gray-400 text-sm">Live fire danger across Nova Scotia</p>
+      </header>
 
-      <div className="ticks"></div>
+      {highestRisk?.risk && highestRisk.risk.score >= 50 && (
+        <AlertBanner location={highestRisk} />
+      )}
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+      <main className="flex flex-1 overflow-hidden">
+        <div className="w-80 shrink-0 overflow-y-auto border-r border-gray-800 p-4 flex flex-col gap-3">
+          {locations.map(loc => (
+            <RiskCard key={loc.id} location={loc} />
+          ))}
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
+        <div className="flex-1">
+          <Map locations={locations} />
         </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      </main>
+    </div>
   )
 }
 
