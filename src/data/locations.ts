@@ -11,7 +11,7 @@ export const NS_LOCATIONS: Location[] = [
   // Annapolis Valley
   { id: 'windsor', name: 'Windsor', lat: 44.9947, lng: -64.1328, region: 'Hants County' },
   { id: 'wolfville', name: 'Wolfville', lat: 45.0878, lng: -64.3615, region: 'Kings County' },
-  { id: 'kentville', name: 'Kentville', lat: 45.0766, lng, -64.4956, region: 'Kings County' },
+  { id: 'kentville', name: 'Kentville', lat: 45.0766, lng: -64.4956, region: 'Kings County' },
   { id: 'annapolis-royal', name: 'Annapolis Royal', lat: 44.7439, lng: -65.5164, region: 'Annapolis County' },
 
   // South Shore
