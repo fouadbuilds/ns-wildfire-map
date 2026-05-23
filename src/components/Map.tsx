@@ -151,7 +151,7 @@ function MapInner({ locations, selectedId, onSelect }: Props) {
         className: "firewatch-tooltip",
       });
 
-      markersRef.current[loc.id] = marker
+      markersRef.current[loc.id] = marker;
     });
   }, [locations, selectedId, map, onSelect]);
 
@@ -180,7 +180,7 @@ export default function Map({ locations, selectedId, onSelect }: Props) {
       >
         <TileLayer
           attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
         <MapInner
           locations={locations}

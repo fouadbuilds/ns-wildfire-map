@@ -4,9 +4,6 @@ This template provides a minimal setup to get React working in Vite with HMR and
 
 Currently, two official plugins are available:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
 ## React Compiler
 
 The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
@@ -17,9 +14,9 @@ If you are developing a production application, we recommend updating the config
 
 ```js
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores(["dist"]),
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ["**/*.{ts,tsx}"],
     extends: [
       // Other configs...
 
@@ -34,13 +31,13 @@ export default defineConfig([
     ],
     languageOptions: {
       parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
         tsconfigRootDir: import.meta.dirname,
       },
       // other options...
     },
   },
-])
+]);
 ```
 
 You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
@@ -70,4 +67,17 @@ export default defineConfig([
     },
   },
 ])
+
+## Deployment (Vercel)
+
+This project is prepared for deployment to Vercel as a static Vite build. A `vercel.json` has been added to force a static build and ensure the `dist` output is served.
+
+Quick steps to deploy:
+
+1. Ensure the repo is pushed to a Git provider (GitHub, GitLab, or Bitbucket).
+2. On Vercel, click "Import Project" and connect the repository.
+3. Vercel will detect the static site — the default build command `npm run build` and output directory `dist` are used. The included `vercel.json` explicitly sets the builder to `@vercel/static-build`.
+4. Trigger a deploy on Vercel; the site will be available at the provided Vercel URL.
+
+If you'd like, I can prepare a GitHub Action or attempt an automated deploy — I'll need your permission and either Vercel access or a push to a repo you connect to Vercel.
 ```

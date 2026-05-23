@@ -13,7 +13,7 @@ export async function fetchWeather(lat: number, lng: number): Promise<WeatherDat
         'winddirection_10m_dominant',
       ].join(','),
       hourly: 'relativehumidity_2m',
-      forecast_days: 1,
+      forecast_days: 7,
       timezone: 'America/Halifax',
     },
   })
@@ -26,6 +26,14 @@ export async function fetchWeather(lat: number, lng: number): Promise<WeatherDat
     windspeed: daily.windspeed_10m_max[0],
     windDirection: daily.winddirection_10m_dominant[0],
     precipitation: daily.precipitation_sum[0],
+    forecast: daily.temperature_2m_max.map((_: number, i: number) => ({
+      date: daily.time[i],
+      temperature: daily.temperature_2m_max[i],
+      windspeed: daily.windspeed_10m_max[i],
+      precipitation: daily.precipitation_sum[i],
+      humidity: response.data.hourly.relativehumidity_2m[i * 24] ?? response.data.hourly.relativehumidity_2m[0],
+      windDirection: daily.winddirection_10m_dominant[i],
+    }))
   }
 }
 

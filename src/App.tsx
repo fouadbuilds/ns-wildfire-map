@@ -1,58 +1,90 @@
-import { useEffect, useState } from 'react'
-import { NS_LOCATIONS } from './data/locations'
-import type { LocationWithRisk } from './types'
-import { fetchWeather } from './utils/weather'
-import { assessRisk } from './utils/riskScore'
-import Map from './components/Map'
-import AlertBanner from './components/AlertBanner'
-import RiskCard from './components/RiskCard'
+import { useEffect, useState } from "react";
+import { NS_LOCATIONS } from "./data/locations";
+import type { LocationWithRisk } from "./types";
+import { fetchWeather } from "./utils/weather";
+import { assessRisk } from "./utils/riskScore";
+import MapView from "./components/Map";
+import AlertBanner from "./components/AlertBanner";
+import RiskCard from "./components/RiskCard";
+import DetailPanel from "./components/DetailPanel";
+import TimeSlider from "./components/TimeSlider";
 
 function App() {
   const [locations, setLocations] = useState<LocationWithRisk[]>(
-    NS_LOCATIONS.map(loc => ({ ...loc, weather: null, risk: null, loading: true, selected: false }))
-  )
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [search, setSearch] = useState('')
+    NS_LOCATIONS.map((loc) => ({
+      ...loc,
+      weather: null,
+      risk: null,
+      loading: true,
+      selected: false,
+    })),
+  );
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [panelOpen, setPanelOpen] = useState(true);
+  const [selectedDay, setSelectedDay] = useState(0);
 
   useEffect(() => {
     NS_LOCATIONS.forEach(async (loc) => {
       try {
-        const weather = await fetchWeather(loc.lat, loc.lng)
-        const risk = assessRisk(weather)
-        setLocations(prev =>
-          prev.map(l => l.id === loc.id ? { ...l, weather, risk, loading: false } : l)
-        )
+        const weather = await fetchWeather(loc.lat, loc.lng);
+        const risk = assessRisk(weather);
+        setLocations((prev) =>
+          prev.map((l) =>
+            l.id === loc.id ? { ...l, weather, risk, loading: false } : l,
+          ),
+        );
       } catch {
-        setLocations(prev =>
-          prev.map(l => l.id === loc.id ? { ...l, loading: false } : l)
-        )
+        setLocations((prev) =>
+          prev.map((l) => (l.id === loc.id ? { ...l, loading: false } : l)),
+        );
       }
-    })
-  }, [])
+    });
+  }, []);
 
   const highestRisk = [...locations]
-    .filter(l => l.risk !== null)
-    .sort((a, b) => (b.risk!.score - a.risk!.score))[0]
+    .filter((l) => l.risk !== null)
+    .sort((a, b) => b.risk!.score - a.risk!.score)[0];
 
-  const filtered = locations.filter(l =>
-    l.name.toLowerCase().includes(search.toLowerCase()) ||
-    l.region.toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = locations.filter(
+    (l) =>
+      l.name.toLowerCase().includes(search.toLowerCase()) ||
+      l.region.toLowerCase().includes(search.toLowerCase()),
+  );
 
   const handleSelect = (id: string) => {
-    setSelectedId(prev => prev === id ? null : id)
-  }
+    setSelectedId((prev) => (prev === id ? null : id));
+    setPanelOpen(true);
+  };
+
+  const forecastLocations = locations.map((loc) => {
+    if (!loc.weather?.forecast || selectedDay === 0) return loc;
+    const day = loc.weather.forecast[selectedDay];
+    if (!day) return loc;
+    const risk = assessRisk({
+      temperature: day.temperature,
+      humidity: day.humidity,
+      windspeed: day.windspeed,
+      windDirection: day.windDirection,
+      precipitation: day.precipitation,
+      forecast: [],
+    });
+    return { ...loc, risk, weather: { ...loc.weather, ...day } };
+  });
 
   return (
-    <div className="h-screen w-screen bg-[#0f0f0f] text-white flex flex-col overflow-hidden">
-
+    <div className="h-screen w-screen flex flex-col overflow-hidden bg-[#F5F0E8]">
       {/* Header */}
-      <header className="flex items-center justify-between px-5 py-3 border-b border-white/10 bg-[#0f0f0f] z-10 shrink-0">
-        <div className="flex items-center gap-2.5">
-          <span className="text-2xl">🔥</span>
+      <header className="flex items-center justify-between px-5 py-3 bg-[#1a1a1a] z-10 shrink-0">
+        <div className="flex items-center gap-3">
+          <span className="text-xl">🔥</span>
           <div>
-            <h1 className="text-base font-bold tracking-widest uppercase text-orange-400">Firewatch</h1>
-            <p className="text-[10px] text-white/30 tracking-widest uppercase">Nova Scotia</p>
+            <h1 className="text-sm font-bold tracking-widest uppercase text-orange-400">
+              Firewatch
+            </h1>
+            <p className="text-[9px] text-white/30 tracking-widest uppercase">
+              Nova Scotia
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2 text-xs text-white/30">
@@ -67,51 +99,86 @@ function App() {
       )}
 
       {/* Body */}
-      <div className="flex flex-1 overflow-hidden">
-
-        {/* Sidebar */}
-        <aside className="w-72 shrink-0 flex flex-col border-r border-white/10 bg-[#111111] overflow-hidden">
-
-          {/* Search */}
-          <div className="px-3 py-3 border-b border-white/10">
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Left Sidebar */}
+        <aside className="w-64 shrink-0 flex flex-col bg-white border-r border-black/5 overflow-hidden z-10 shadow-sm">
+          <div className="px-3 py-3 border-b border-black/5">
             <input
               type="text"
               placeholder="Search communities..."
               value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-orange-400/50 transition-colors"
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full bg-black/5 border border-black/10 rounded-lg px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-orange-400 transition-colors"
             />
           </div>
-
-          {/* Count */}
-          <div className="px-4 py-2 text-[10px] text-white/20 uppercase tracking-widest border-b border-white/5">
+          <div className="px-4 py-2 text-[10px] text-gray-400 uppercase tracking-widest border-b border-black/5">
             {filtered.length} communities
           </div>
-
-          {/* Cards */}
           <div className="flex-1 overflow-y-auto">
-            {filtered.map(loc => (
-              <RiskCard
-                key={loc.id}
-                location={loc}
-                selected={selectedId === loc.id}
-                onSelect={handleSelect}
-              />
-            ))}
+            {forecastLocations
+              .filter(
+                (l) =>
+                  l.name.toLowerCase().includes(search.toLowerCase()) ||
+                  l.region.toLowerCase().includes(search.toLowerCase()),
+              )
+              .map((loc) => (
+                <RiskCard
+                  key={loc.id}
+                  location={loc}
+                  selected={selectedId === loc.id}
+                  onSelect={handleSelect}
+                />
+              ))}
           </div>
         </aside>
 
         {/* Map */}
-        <main className="flex-1 relative">
-          <Map
-            locations={locations}
+        <main className="flex-1 relative isolate">
+          <MapView
+            locations={forecastLocations}
             selectedId={selectedId}
             onSelect={handleSelect}
           />
+
+          {/* Time Slider */}
+          {locations.some(
+            (l) => l.weather?.forecast && l.weather.forecast.length > 1,
+          ) && (
+            <TimeSlider
+              forecast={
+                locations.find((l) => l.weather?.forecast)?.weather?.forecast ??
+                []
+              }
+              selectedDay={selectedDay}
+              onDayChange={setSelectedDay}
+            />
+          )}
         </main>
+
+        {/* Toggle arrow when panel is closed */}
+        {!panelOpen && (
+          <button
+            onClick={() => setPanelOpen(true)}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-30 bg-white border border-black/10 rounded-l-lg px-1.5 py-3 shadow-md hover:bg-gray-50 transition-colors"
+          >
+            <span className="text-gray-400 text-xs">←</span>
+          </button>
+        )}
+
+        {/* Right Detail Panel */}
+        {panelOpen && (
+          <DetailPanel
+            location={
+              forecastLocations.find((l) => l.id === selectedId) ?? null
+            }
+            locations={forecastLocations}
+            onClose={() => setPanelOpen(false)}
+            onSelect={handleSelect}
+          />
+        )}
       </div>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

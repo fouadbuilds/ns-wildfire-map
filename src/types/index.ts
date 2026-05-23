@@ -6,12 +6,22 @@ export interface Location {
   region: string
 }
 
+export interface ForecastDay {
+  date: string
+  temperature: number
+  humidity: number
+  windspeed: number
+  windDirection: number
+  precipitation: number
+}
+
 export interface WeatherData {
   temperature: number
   humidity: number
   windspeed: number
   windDirection: number
   precipitation: number
+  forecast: ForecastDay[]
 }
 
 export type RiskLevel = 'Low' | 'Moderate' | 'High' | 'Very High' | 'Extreme'
