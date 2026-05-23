@@ -42,16 +42,6 @@ function App() {
     });
   }, []);
 
-  const highestRisk = [...locations]
-    .filter((l) => l.risk !== null)
-    .sort((a, b) => b.risk!.score - a.risk!.score)[0];
-
-  const filtered = locations.filter(
-    (l) =>
-      l.name.toLowerCase().includes(search.toLowerCase()) ||
-      l.region.toLowerCase().includes(search.toLowerCase()),
-  );
-
   const handleSelect = (id: string) => {
     setSelectedId((prev) => (prev === id ? null : id));
     setPanelOpen(true);
@@ -71,6 +61,11 @@ function App() {
     });
     return { ...loc, risk, weather: { ...loc.weather, ...day } };
   });
+  const filtered = forecastLocations.filter(
+    (l) =>
+      l.name.toLowerCase().includes(search.toLowerCase()) ||
+      l.region.toLowerCase().includes(search.toLowerCase()),
+  );
 
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-[#F5F0E8]">
@@ -94,9 +89,8 @@ function App() {
       </header>
 
       {/* Alert Banner */}
-      {highestRisk?.risk && highestRisk.risk.score >= 40 && (
-        <AlertBanner location={highestRisk} />
-      )}
+
+      <AlertBanner locations={forecastLocations} />
 
       {/* Body */}
       <div className="flex flex-1 overflow-hidden relative">
@@ -115,13 +109,7 @@ function App() {
             {filtered.length} communities
           </div>
           <div className="flex-1 overflow-y-auto">
-            {forecastLocations
-              .filter(
-                (l) =>
-                  l.name.toLowerCase().includes(search.toLowerCase()) ||
-                  l.region.toLowerCase().includes(search.toLowerCase()),
-              )
-              .map((loc) => (
+            {filtered.map((loc) => (
                 <RiskCard
                   key={loc.id}
                   location={loc}

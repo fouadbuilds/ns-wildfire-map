@@ -239,41 +239,121 @@ export default function DetailPanel({
         <NSummary locations={locations} onSelect={onSelect} />
       ) : (
         <div className="flex-1 overflow-y-auto">
-          {/* Hero */}
-          <div className="px-5 py-5 border-b border-black/5">
+          {/* Hero — status first */}
+          <div
+            className="px-5 py-5 border-b border-black/5"
+            style={{
+              borderLeft: location.risk
+                ? `4px solid ${location.risk.color}`
+                : undefined,
+            }}
+          >
             <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">
               {location.region}
             </p>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
               {location.name}
             </h2>
+
             {location.risk && (
-              <div className="flex items-center gap-3">
-                <span
-                  className="text-3xl font-black"
-                  style={{ color: location.risk.color }}
-                >
-                  {location.risk.score}
-                  <span className="text-base font-normal text-gray-400">
-                    /100
+              <>
+                <div className="flex items-center gap-3 mb-3">
+                  <span
+                    className="text-sm font-bold px-3 py-1.5 rounded-full uppercase tracking-wide"
+                    style={{
+                      backgroundColor: `${location.risk.color}20`,
+                      color: location.risk.color,
+                    }}
+                  >
+                    {location.risk.level} Risk
                   </span>
-                </span>
-                <span
-                  className="text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide"
+                  <span
+                    className="text-2xl font-black"
+                    style={{ color: location.risk.color }}
+                  >
+                    {location.risk.score}
+                    <span className="text-sm font-normal text-gray-400">
+                      /100
+                    </span>
+                  </span>
+                </div>
+
+                {/* Advisory — right after status */}
+                <div
+                  className="rounded-xl px-4 py-3"
                   style={{
-                    backgroundColor: `${location.risk.color}20`,
-                    color: location.risk.color,
+                    backgroundColor: `${location.risk.color}10`,
+                    borderLeft: `3px solid ${location.risk.color}`,
                   }}
                 >
-                  {location.risk.level}
-                </span>
-              </div>
+                  <p className="text-xs text-gray-600 leading-relaxed">
+                    {advisories[location.risk.level]}
+                  </p>
+                </div>
+              </>
             )}
           </div>
 
-          {/* Weather */}
-          {location.weather && (
+          {/* Evacuation — FIRST after hero */}
+          {evac && (
             <div className="px-5 py-4 border-b border-black/5">
+              <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-3">
+                🚗 If You Need To Leave
+              </p>
+              <div className="flex flex-col gap-2">
+                <div className="bg-orange-50 border border-orange-100 rounded-xl px-4 py-3">
+                  <p className="text-[10px] text-orange-500 uppercase tracking-widest mb-1">
+                    Evacuation Route
+                  </p>
+                  <p className="text-sm font-semibold text-gray-800">
+                    {evac.route}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    ~{evac.time} min drive to safety
+                  </p>
+                </div>
+                <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
+                  <p className="text-[10px] text-blue-500 uppercase tracking-widest mb-1">
+                    Nearest Shelter
+                  </p>
+                  <p className="text-sm font-semibold text-gray-800">
+                    {evac.shelter}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Emergency contacts — second */}
+          <div className="px-5 py-4 border-b border-black/5">
+            <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-3">
+              🚒 Emergency
+            </p>
+            <div className="flex flex-col gap-2">
+              <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] text-red-400 uppercase tracking-widest mb-0.5">
+                    Active Fire
+                  </p>
+                  <p className="text-sm font-bold text-gray-800">Call 911</p>
+                </div>
+                <span className="text-2xl">🆘</span>
+              </div>
+              <div className="bg-gray-50 rounded-xl px-4 py-3">
+                <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-0.5">
+                  NS Forestry Fire Line
+                </p>
+                <p className="text-sm font-medium text-gray-800">
+                  1-800-565-2224
+                </p>
+                <p className="text-xs text-gray-400">Report wildfires 24/7</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Weather breakdown — last, collapsed feel */}
+          {location.weather && (
+            <div className="px-5 py-4 pb-8">
               <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-3">
                 Current Conditions
               </p>
@@ -331,86 +411,6 @@ export default function DetailPanel({
               </div>
             </div>
           )}
-
-          {/* Advisory */}
-          {location.risk && (
-            <div className="px-5 py-4 border-b border-black/5">
-              <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-2">
-                Advisory
-              </p>
-              <div
-                className="rounded-xl px-4 py-3"
-                style={{
-                  backgroundColor: `${location.risk.color}12`,
-                  borderLeft: `3px solid ${location.risk.color}`,
-                }}
-              >
-                <p
-                  className="font-semibold text-sm mb-1"
-                  style={{ color: location.risk.color }}
-                >
-                  {location.risk.level} Risk
-                </p>
-                <p className="text-gray-600 text-xs leading-relaxed">
-                  {advisories[location.risk.level]}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Evacuation */}
-          {evac && (
-            <div className="px-5 py-4 border-b border-black/5">
-              <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-3">
-                🚗 Evacuation
-              </p>
-              <div className="flex flex-col gap-2">
-                <div className="bg-orange-50 rounded-xl px-4 py-3">
-                  <p className="text-[10px] text-orange-400 uppercase tracking-widest mb-1">
-                    Route
-                  </p>
-                  <p className="text-sm font-medium text-gray-800">
-                    {evac.route}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    ~{evac.time} min drive
-                  </p>
-                </div>
-                <div className="bg-blue-50 rounded-xl px-4 py-3">
-                  <p className="text-[10px] text-blue-400 uppercase tracking-widest mb-1">
-                    Nearest Shelter
-                  </p>
-                  <p className="text-sm font-medium text-gray-800">
-                    {evac.shelter}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Responder */}
-          <div className="px-5 py-4 pb-8">
-            <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-3">
-              🚒 Emergency
-            </p>
-            <div className="flex flex-col gap-2">
-              <div className="bg-red-50 rounded-xl px-4 py-3">
-                <p className="text-[10px] text-red-400 uppercase tracking-widest mb-0.5">
-                  Active Fire
-                </p>
-                <p className="text-sm font-bold text-gray-800">Call 911</p>
-              </div>
-              <div className="bg-gray-50 rounded-xl px-4 py-3">
-                <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-0.5">
-                  NS Forestry Fire Line
-                </p>
-                <p className="text-sm font-medium text-gray-800">
-                  1-800-565-2224
-                </p>
-                <p className="text-xs text-gray-400">Report wildfires 24/7</p>
-              </div>
-            </div>
-          </div>
         </div>
       )}
     </div>

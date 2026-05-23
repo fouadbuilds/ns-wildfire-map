@@ -1,31 +1,55 @@
 import type { LocationWithRisk } from '../types'
 
 interface Props {
-  location: LocationWithRisk
+  locations: LocationWithRisk[]
 }
 
-export default function AlertBanner({ location }: Props) {
-  const risk = location.risk!
+export default function AlertBanner({ locations }: Props) {
+  const loaded = locations.filter(l => l.risk !== null)
+  const extreme = loaded.filter(l => l.risk!.level === 'Extreme' || l.risk!.level === 'Very High')
+  const high = loaded.filter(l => l.risk!.level === 'High')
 
-  const styles: Record<string, { bg: string; border: string; text: string }> = {
-    'Extreme':   { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-700' },
-    'Very High': { bg: 'bg-red-50',    border: 'border-red-200',    text: 'text-red-700' },
-    'High':      { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-700' },
-    'Moderate':  { bg: 'bg-yellow-50', border: 'border-yellow-200', text: 'text-yellow-700' },
+  if (extreme.length > 0) {
+    return (
+      <div className="bg-red-600 px-5 py-2.5 flex items-center gap-3 shrink-0">
+        <span className="animate-pulse">🔴</span>
+        <div className="flex-1">
+          <span className="font-bold text-white text-sm">Critical Fire Conditions</span>
+          <span className="text-red-100 text-xs ml-2">
+            {extreme.map(l => l.name).join(', ')} — Take action now
+          </span>
+        </div>
+        <span className="text-red-200 text-[10px] uppercase tracking-widest shrink-0">
+          {new Date().toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' })}
+        </span>
+      </div>
+    )
   }
 
-  const s = styles[risk.level] ?? styles['Moderate']
+  if (high.length > 0) {
+    return (
+      <div className="bg-orange-500 px-5 py-2.5 flex items-center gap-3 shrink-0">
+        <span>🟠</span>
+        <div className="flex-1">
+          <span className="font-bold text-white text-sm">Watch Conditions Active</span>
+          <span className="text-orange-100 text-xs ml-2">
+            {high.map(l => l.name).join(', ')} at High risk — Stay alert
+          </span>
+        </div>
+        <span className="text-orange-200 text-[10px] uppercase tracking-widest shrink-0">
+          {new Date().toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' })}
+        </span>
+      </div>
+    )
+  }
 
   return (
-    <div className={`${s.bg} border-b ${s.border} px-5 py-2 flex items-center gap-3 shrink-0`}>
-      <span className="text-sm">⚠️</span>
-      <p className={`text-xs ${s.text}`}>
-        <span className="font-semibold">{risk.level} fire danger</span>
-        {' '}detected in{' '}
-        <span className="font-semibold">{location.name}</span>
-        {' '}— Risk score {risk.score}/100
+    <div className="bg-green-50 border-b border-green-100 px-5 py-2 flex items-center gap-3 shrink-0">
+      <span>🟢</span>
+      <p className="text-green-700 text-xs font-medium">
+        All Clear — No critical fire conditions in Nova Scotia right now
       </p>
-      <span className="ml-auto text-[10px] text-gray-400 uppercase tracking-widest shrink-0">
+      <span className="ml-auto text-green-400 text-[10px] uppercase tracking-widest">
         {new Date().toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit' })}
       </span>
     </div>

@@ -20,7 +20,7 @@ export default function TimeSlider({ forecast, selectedDay, onDayChange }: Props
     <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 bg-white rounded-2xl shadow-xl border border-black/10 px-5 py-3 flex flex-col gap-2 min-w-96">
 
       <div className="flex items-center justify-between mb-1">
-        <p className="text-[10px] text-gray-400 uppercase tracking-widest">7-Day Forecast</p>
+        <p className="text-[10px] text-gray-400 uppercase tracking-widest">7-Day Risk Outlook</p>
         <p className="text-[10px] text-gray-400">
           {selectedDay === 0 ? 'Live conditions' : `+${selectedDay} day${selectedDay > 1 ? 's' : ''}`}
         </p>
