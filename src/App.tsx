@@ -6,10 +6,12 @@ import { assessRisk } from "./utils/riskScore";
 import MapView from "./components/Map";
 import AlertBanner from "./components/AlertBanner";
 import RiskCard from "./components/RiskCard";
-import DetailPanel from "./components/DetailPanel";
+import DetailPanel, {
+  evacuationInfo,
+  defaultEvac,
+} from "./components/DetailPanel";
 import { estimateTimeToImpact } from "./utils/spread";
 import RouteModal from "./components/RouteModal";
-import { evacuationInfo, defaultEvac } from "./components/DetailPanel";
 
 function App() {
   const [locations, setLocations] = useState<LocationWithRisk[]>(
@@ -60,7 +62,7 @@ function App() {
   const handleShowRoute = (id: string) => {
     const loc = forecastLocations.find((l) => l.id === id);
     if (!loc) return;
-    const evac = (evacuationInfo as any)[loc.id] ?? defaultEvac;
+    const evac = evacuationInfo[loc.id] ?? defaultEvac;
     setRouteEvac(evac);
     setRouteName(loc.name);
     setSelectedId(id);
