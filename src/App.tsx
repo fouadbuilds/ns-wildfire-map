@@ -9,7 +9,7 @@ import RiskCard from "./components/RiskCard";
 import DetailPanel, {
   evacuationInfo,
   defaultEvac,
-} from "./components/DetailPanel";
+} from "./components/DetailPanel.tsx";
 import { estimateTimeToImpact } from "./utils/spread";
 import RouteModal from "./components/RouteModal";
 

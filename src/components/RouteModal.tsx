@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo } from "react";
+import { useEffect, useRef, useId } from "react";
 
 interface EvacInfo {
   route: string;
@@ -22,10 +22,8 @@ export default function RouteModal({
   const modalRef = useRef<HTMLDivElement | null>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
 
-  const titleId = useMemo(
-    () => `route-modal-title-${Math.random().toString(36).slice(2, 9)}`,
-    [],
-  );
+  const uid = useId();
+  const titleId = `route-modal-title-${uid.replace(/[:]/g, "")}`;
 
   useEffect(() => {
     if (!open || !evac) return;
@@ -104,7 +102,7 @@ export default function RouteModal({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="relative bg-white rounded-lg shadow-xl w-[420px] p-5"
+        className="relative bg-white rounded-lg shadow-xl w-105 p-5"
       >
         <h3 id={titleId} className="text-lg font-bold mb-2">
           Evacuation Plan — {locationName}
