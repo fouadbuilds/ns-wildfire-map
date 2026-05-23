@@ -7,7 +7,9 @@ import MapView from "./components/Map";
 import AlertBanner from "./components/AlertBanner";
 import RiskCard from "./components/RiskCard";
 import DetailPanel from "./components/DetailPanel";
-import TimeSlider from "./components/TimeSlider";
+import { estimateTimeToImpact } from "./utils/spread";
+import RouteModal from "./components/RouteModal";
+import { evacuationInfo, defaultEvac } from "./components/DetailPanel";
 
 function App() {
   const [locations, setLocations] = useState<LocationWithRisk[]>(
@@ -47,6 +49,25 @@ function App() {
     setPanelOpen(true);
   };
 
+  const [routeOpen, setRouteOpen] = useState(false);
+  const [routeEvac, setRouteEvac] = useState<{
+    route: string;
+    shelter: string;
+    time: number;
+  } | null>(null);
+  const [routeName, setRouteName] = useState<string | undefined>(undefined);
+
+  const handleShowRoute = (id: string) => {
+    const loc = forecastLocations.find((l) => l.id === id);
+    if (!loc) return;
+    const evac = (evacuationInfo as any)[loc.id] ?? defaultEvac;
+    setRouteEvac(evac);
+    setRouteName(loc.name);
+    setSelectedId(id);
+    setPanelOpen(true);
+    setRouteOpen(true);
+  };
+
   const forecastLocations = locations.map((loc) => {
     if (!loc.weather?.forecast || selectedDay === 0) return loc;
     const day = loc.weather.forecast[selectedDay];
@@ -70,27 +91,36 @@ function App() {
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-[#F5F0E8]">
       {/* Header */}
-      <header className="flex items-center justify-between px-5 py-3 bg-[#1a1a1a] z-10 shrink-0">
-        <div className="flex items-center gap-3">
+      <header className="grid grid-cols-3 items-center px-5 py-3 bg-[#1a1a1a] z-10 shrink-0 border-b border-white/5">
+        <div className="flex items-center gap-2 justify-start">
           <span className="text-xl">🔥</span>
-          <div>
-            <h1 className="text-sm font-bold tracking-widest uppercase text-orange-400">
-              Firewatch
-            </h1>
-            <p className="text-[9px] text-white/30 tracking-widest uppercase">
-              Nova Scotia
-            </p>
-          </div>
+          <h1 className="text-sm font-bold tracking-[0.28em] uppercase text-black bg-orange-400 px-2.5 py-1 rounded-full">
+            Firewatch
+          </h1>
         </div>
-        <div className="flex items-center gap-2 text-xs text-white/30">
-          <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+
+        <div className="justify-self-center text-center">
+          <p className="text-[10px] uppercase tracking-[0.42em] text-orange-300 font-semibold">
+            Nova Scotia Wildfire Watch
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 text-xs text-white/35 justify-end">
+          <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
           Live
         </div>
       </header>
 
       {/* Alert Banner */}
 
-      <AlertBanner locations={forecastLocations} />
+      <AlertBanner
+        locations={forecastLocations}
+        onSelect={(id) => {
+          setSelectedId(id);
+          setPanelOpen(true);
+        }}
+        onShowRoute={handleShowRoute}
+      />
 
       {/* Body */}
       <div className="flex flex-1 overflow-hidden relative">
@@ -106,17 +136,21 @@ function App() {
             />
           </div>
           <div className="px-4 py-2 text-[10px] text-gray-400 uppercase tracking-widest border-b border-black/5">
-            {filtered.length} communities
+            Communities
           </div>
           <div className="flex-1 overflow-y-auto">
-            {filtered.map((loc) => (
+            {filtered.map((loc) => {
+              const minutes = estimateTimeToImpact(loc, forecastLocations);
+              return (
                 <RiskCard
                   key={loc.id}
                   location={loc}
                   selected={selectedId === loc.id}
                   onSelect={handleSelect}
+                  minutes={minutes}
                 />
-              ))}
+              );
+            })}
           </div>
         </aside>
 
@@ -127,20 +161,6 @@ function App() {
             selectedId={selectedId}
             onSelect={handleSelect}
           />
-
-          {/* Time Slider */}
-          {locations.some(
-            (l) => l.weather?.forecast && l.weather.forecast.length > 1,
-          ) && (
-            <TimeSlider
-              forecast={
-                locations.find((l) => l.weather?.forecast)?.weather?.forecast ??
-                []
-              }
-              selectedDay={selectedDay}
-              onDayChange={setSelectedDay}
-            />
-          )}
         </main>
 
         {/* Toggle arrow when panel is closed */}
@@ -162,8 +182,20 @@ function App() {
             locations={forecastLocations}
             onClose={() => setPanelOpen(false)}
             onSelect={handleSelect}
+            forecast={
+              forecastLocations.find((l) => l.weather?.forecast)?.weather
+                ?.forecast ?? []
+            }
+            selectedDay={selectedDay}
+            onDayChange={setSelectedDay}
           />
         )}
+        <RouteModal
+          open={routeOpen}
+          evac={routeEvac}
+          onClose={() => setRouteOpen(false)}
+          locationName={routeName}
+        />
       </div>
     </div>
   );

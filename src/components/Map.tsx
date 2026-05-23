@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
 import type { LocationWithRisk } from "../types";
+import { estimateTimeToImpact } from "../utils/spread";
 import "leaflet/dist/leaflet.css";
 
 interface Props {
@@ -18,32 +19,17 @@ function getRiskColor(score: number): string {
   return "#22C55E";
 }
 
-function createFlameIcon(color: string, pulse: boolean, selected: boolean, score: number): L.DivIcon {
-  const opacity = score < 20 ? 0.25 : score < 40 ? 0.5 : 1
-  const size = selected ? 40 : score >= 60 ? 32 : score >= 40 ? 26 : 18
-
-  const pulseRing = pulse ? `
-    <span style="
-      position: absolute;
-      inset: -8px;
-      border-radius: 50%;
-      border: 2px solid ${color};
-      opacity: 0.5;
-      animation: ping 1.5s cubic-bezier(0,0,0.2,1) infinite;
-    "/>
-    <span style="
-      position: absolute;
-      inset: -16px;
-      border-radius: 50%;
-      border: 1.5px solid ${color};
-      opacity: 0.25;
-      animation: ping 1.5s cubic-bezier(0,0,0.2,1) infinite;
-      animation-delay: 0.4s;
-    "/>
-  ` : ''
+function createFlameIcon(
+  color: string,
+  _pulse: boolean,
+  selected: boolean,
+  score: number,
+): L.DivIcon {
+  const opacity = score < 20 ? 0.25 : score < 40 ? 0.5 : 1;
+  const size = selected ? 40 : score >= 60 ? 32 : score >= 40 ? 26 : 18;
 
   return L.divIcon({
-    className: '',
+    className: "",
     html: `
       <div style="
         position: relative;
@@ -55,38 +41,32 @@ function createFlameIcon(color: string, pulse: boolean, selected: boolean, score
         opacity: ${opacity};
         transition: opacity 0.3s ease;
       ">
-        ${pulseRing}
         <div style="
           width: ${size}px;
           height: ${size}px;
-          background: ${color}${score >= 60 ? '33' : '18'};
-          border: ${score >= 60 ? '2px' : '1px'} solid ${color}${score >= 60 ? 'cc' : '66'};
+          background: ${color}${score >= 60 ? "33" : "18"};
+          border: ${score >= 60 ? "2px" : "1px"} solid ${color}${score >= 60 ? "cc" : "66"};
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           font-size: ${size * 0.5}px;
-          box-shadow: ${score >= 60 ? `0 0 20px ${color}44, 0 0 40px ${color}22` : 'none'};
+          box-shadow: ${score >= 60 ? `0 0 20px ${color}44, 0 0 40px ${color}22` : "none"};
           transition: all 0.3s ease;
         ">
-          ${score >= 60 ? '🔥' : score >= 40 ? '⚠️' : '·'}
+          ${score >= 60 ? "🔥" : score >= 40 ? "⚠️" : "·"}
         </div>
       </div>
-      <style>
-        @keyframes ping {
-          0% { transform: scale(1); opacity: 0.5; }
-          75%, 100% { transform: scale(2.5); opacity: 0; }
-        }
-      </style>
     `,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
-  })
+  });
 }
 
 function MapInner({ locations, selectedId, onSelect }: Props) {
   const map = useMap();
   const markersRef = useRef<Record<string, L.Marker>>({});
+  const heatRef = useRef<L.LayerGroup | null>(null);
 
   // Fly to selected
   useEffect(() => {
@@ -97,15 +77,18 @@ function MapInner({ locations, selectedId, onSelect }: Props) {
 
   // Wind arrow control
   useEffect(() => {
-    const loaded = locations.filter(l => l.weather)
-    if (!loaded.length) return
+    const loaded = locations.filter((l) => l.weather);
+    if (!loaded.length) return;
 
-    const avgDir = loaded.reduce((sum, l) => sum + l.weather!.windDirection, 0) / loaded.length
-    const avgSpeed = loaded.reduce((sum, l) => sum + l.weather!.windspeed, 0) / loaded.length
+    const avgDir =
+      loaded.reduce((sum, l) => sum + l.weather!.windDirection, 0) /
+      loaded.length;
+    const avgSpeed =
+      loaded.reduce((sum, l) => sum + l.weather!.windspeed, 0) / loaded.length;
 
-    const windControl = new L.Control({ position: 'bottomleft' })
+    const windControl = new L.Control({ position: "bottomleft" });
     windControl.onAdd = () => {
-      const div = L.DomUtil.create('div')
+      const div = L.DomUtil.create("div");
       div.innerHTML = `
         <div style="
           background: white;
@@ -128,26 +111,67 @@ function MapInner({ locations, selectedId, onSelect }: Props) {
             <div style="font-size: 12px; font-weight: 600; color: #1a1a1a;">${Math.round(avgSpeed)} km/h</div>
           </div>
         </div>
-      `
-      return div
-    }
-    windControl.addTo(map)
+      `;
+      return div;
+    };
+    windControl.addTo(map);
 
-    return () => { windControl.remove() }
-  }, [locations, map])
+    return () => {
+      windControl.remove();
+    };
+  }, [locations, map]);
 
   // Render markers
   useEffect(() => {
+    if (heatRef.current) {
+      heatRef.current.remove();
+      heatRef.current = null;
+    }
+
+    const heatGroup = L.layerGroup().addTo(map);
+    heatRef.current = heatGroup;
+
     Object.values(markersRef.current).forEach((m) => m.remove());
     markersRef.current = {};
 
     locations.forEach((loc) => {
       if (!loc.risk) return;
 
+      // compute minutes-to-impact using nearest sources
+      const minutes = estimateTimeToImpact(loc, locations);
+
       const pulse = loc.risk.score >= 60;
       const selected = loc.id === selectedId;
       const color = getRiskColor(loc.risk.score);
-      const icon = createFlameIcon(color, pulse, selected, loc.risk.score)
+      const icon = createFlameIcon(color, pulse, selected, loc.risk.score);
+
+      const heatStrength = Math.max(0.22, Math.min(0.72, loc.risk.score / 120));
+      const heatRadius = selected
+        ? 42
+        : loc.risk.score >= 60
+          ? 36
+          : loc.risk.score >= 40
+            ? 30
+            : 24;
+
+      L.circleMarker([loc.lat, loc.lng], {
+        radius: heatRadius,
+        color,
+        weight: 0,
+        fillColor: color,
+        fillOpacity: heatStrength,
+        pane: "overlayPane",
+      }).addTo(heatGroup);
+
+      L.circleMarker([loc.lat, loc.lng], {
+        radius: heatRadius * 1.55,
+        color,
+        weight: 1,
+        opacity: 0.18,
+        fillColor: color,
+        fillOpacity: 0.06,
+        pane: "overlayPane",
+      }).addTo(heatGroup);
 
       const marker = L.marker([loc.lat, loc.lng], { icon })
         .addTo(map)
@@ -168,15 +192,16 @@ function MapInner({ locations, selectedId, onSelect }: Props) {
           <div style="font-size: 10px; color: #ffffff55; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;">
             ${loc.region}
           </div>
-          <div style="font-size: 11px; font-weight: 700; color: ${color};">
-            ${loc.risk.level} — ${loc.risk.score}/100
-          </div>
-          ${loc.weather ? `
-            <div style="font-size: 10px; color: #ffffff44; margin-top: 6px; display: flex; gap: 8px;">
-              <span>🌡️ ${loc.weather.temperature}°C</span>
-              <span>💨 ${loc.weather.windspeed}km/h</span>
+          <div style="font-size: 11px; font-weight: 700; color: ${color};">${loc.risk.level} — ${loc.risk.score}/100</div>
+          ${
+            minutes
+              ? `
+            <div style="font-size:11px; color:#ffffff66; margin-top:6px">
+              ⏱️ ~${minutes} min to impact
             </div>
-          ` : ''}
+          `
+              : ""
+          }
         </div>
       `;
 
@@ -190,6 +215,11 @@ function MapInner({ locations, selectedId, onSelect }: Props) {
 
       markersRef.current[loc.id] = marker;
     });
+
+    return () => {
+      heatGroup.remove();
+      heatRef.current = null;
+    };
   }, [locations, selectedId, map, onSelect]);
 
   return null;
@@ -199,6 +229,9 @@ export default function Map({ locations, selectedId, onSelect }: Props) {
   return (
     <>
       <style>{`
+        .leaflet-overlay-pane {
+          mix-blend-mode: multiply;
+        }
         .firewatch-tooltip .leaflet-tooltip {
           background: transparent !important;
           border: none !important;
