@@ -99,7 +99,7 @@ Score 0-100 from four factors:
 ### Must Have
 
 - [x] Deploy to Vercel — prepared repository for deployment
-  - Notes: `vercel.json` now includes `installCommand: "npm ci --include=dev"` so Vercel installs `typescript` before running `npm run build`. README deployment instructions were added. Manual import/link on Vercel is still required to produce the live URL; the agent cannot perform network-authenticated deploys.
+  - Notes: switched back to Vercel `@vercel/static-build` with `distDir: "dist"` so the built Vite output is packaged directly. `installCommand: "npm ci --include=dev"` keeps `typescript` available. Manual import/link on Vercel is still required to produce the live URL; the agent cannot perform network-authenticated deploys.
 - [ ] Map layers toggle — street (CartoDB Positron) / satellite (ESRI World Imagery)
 - [ ] README.md — project description, setup instructions, data sources
 - [ ] Push slide deck to GitHub repo
