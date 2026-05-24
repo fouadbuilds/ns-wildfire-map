@@ -1,83 +1,45 @@
-# React + TypeScript + Vite
+# 🔥 Firewatch NS
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Real-time wildfire situational awareness for Nova Scotia communities.**
 
-Currently, two official plugins are available:
+Built for Hack the Elements 2026 — ShiftKey Labs.
 
-## React Compiler
+## The Problem
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+When a wildfire emergency occurs in Nova Scotia, residents receive generic province-wide alerts that don't answer the questions that matter most:
 
-## Expanding the ESLint configuration
+- Is the fire heading toward *my* community?
+- How long do I have?
+- Which road do I take?
+- Where do I go?
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+In May 2023, 16,000 Halifax-area residents were evacuated with approximately 30 minutes notice. No public tool existed to give community-specific guidance.
 
-```js
-export default defineConfig([
-  globalIgnores(["dist"]),
-  {
-    files: ["**/*.{ts,tsx}"],
-    extends: [
-      // Other configs...
+## The Solution
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+Firewatch converts live weather data into a real-time risk score for 26 Nova Scotia communities — and pairs that risk score with immediate, actionable evacuation guidance.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
-```
+## Features
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+- 🗺️ Interactive map with community-level risk indicators
+- 📊 Risk score (0-100) from temperature, humidity, wind, and precipitation
+- 🚗 Evacuation routes and nearest shelters per community
+- 📅 7-day risk outlook with forecast scrubber
+- 💨 Live wind direction and speed indicator
+- 🚨 Province-wide status banner (All Clear / Watch / Critical)
+- 🚒 Emergency contacts — 911 and NS Forestry Fire Line
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Data Sources
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- **Weather:** Open-Meteo API (open source, no key required)
+- **Communities:** 26 NS municipalities across all regions
+- **Evacuation routes:** Nova Scotia Emergency Management Office guidelines
 
-## Deployment (Vercel)
+## Tech Stack
 
-This project is prepared for deployment to Vercel as a static Vite build. A `vercel.json` has been added to force a static build and ensure the `dist` output is served.
+- React + TypeScript + Vite
+- Tailwind CSS
+- Leaflet + react-leaflet
+- Open-Meteo API
 
-Quick steps to deploy:
 
-1. Ensure the repo is pushed to a Git provider (GitHub, GitLab, or Bitbucket).
-2. On Vercel, click "Import Project" and connect the repository.
-3. Vercel will detect the static site — the default build command `npm run build` and output directory `dist` are used. The included `vercel.json` explicitly sets the builder to `@vercel/static-build`.
-4. Trigger a deploy on Vercel; the site will be available at the provided Vercel URL.
-
-If you'd like, I can prepare a GitHub Action or attempt an automated deploy — I'll need your permission and either Vercel access or a push to a repo you connect to Vercel.
-```
